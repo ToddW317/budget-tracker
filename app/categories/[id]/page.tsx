@@ -184,6 +184,9 @@ export default function CategoryDetailsPage() {
         },
         grid: {
           display: false
+        },
+        border: {
+          display: false
         }
       },
       y: {
@@ -195,8 +198,10 @@ export default function CategoryDetailsPage() {
           text: 'Individual Expenses ($)'
         },
         grid: {
-          drawBorder: false,
           borderDash: [2, 4]
+        },
+        border: {
+          display: false
         }
       },
       y1: {
@@ -208,8 +213,10 @@ export default function CategoryDetailsPage() {
           text: 'Cumulative Spending ($)'
         },
         grid: {
-          display: false,
-          drawBorder: false
+          display: false
+        },
+        border: {
+          display: false
         }
       }
     },
