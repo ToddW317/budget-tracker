@@ -3,10 +3,11 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Category, Expense } from '@/components/BudgetDashboard'
-import { getUserCategoryById, getUserExpensesByCategory, updateCategory, deleteExpense } from '@/services/firebase'
+import { getUserCategoryById, getUserExpensesByCategory, updateCategory, deleteExpense, updateExpense } from '@/services/firebase'
 import Link from 'next/link'
 import { LineChart } from '@/components/charts/ChartWrapper'
 import { useParams } from 'next/navigation'
+import { TooltipItem } from 'chart.js'
 
 export default function CategoryDetailsPage() {
   const params = useParams()
@@ -24,12 +25,6 @@ export default function CategoryDetailsPage() {
   const [editingExpense, setEditingExpense] = useState<string | null>(null)
   const [editExpenseData, setEditExpenseData] = useState({ amount: '', description: '' })
 
-  useEffect(() => {
-    if (user && categoryId) {
-      loadCategoryData()
-    }
-  }, [user, categoryId, loadCategoryData])
-
   const loadCategoryData = useCallback(async () => {
     try {
       const [categoryData, expensesData] = await Promise.all([
@@ -45,6 +40,12 @@ export default function CategoryDetailsPage() {
       setLoading(false)
     }
   }, [user, categoryId])
+
+  useEffect(() => {
+    if (user && categoryId) {
+      loadCategoryData()
+    }
+  }, [user, categoryId, loadCategoryData])
 
   const handleUpdateBudget = async () => {
     if (!category || !newBudget) return
@@ -215,7 +216,7 @@ export default function CategoryDetailsPage() {
         boxPadding: 6,
         usePointStyle: true,
         callbacks: {
-          label: function(context: any) {
+          label: function(context: TooltipItem<'line' | 'bar'>) {
             return `$${context.raw.y.toFixed(2)}`
           }
         }
