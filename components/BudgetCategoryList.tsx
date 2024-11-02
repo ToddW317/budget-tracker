@@ -1,3 +1,5 @@
+'use client'
+
 import { useState } from 'react';
 import { Category } from './BudgetDashboard';
 import Link from 'next/link';

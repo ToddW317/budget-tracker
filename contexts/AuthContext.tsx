@@ -1,135 +1,91 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react'
 import { 
-  User,
-  signInWithPopup,
-  GoogleAuthProvider,
+  signInWithPopup, 
+  GoogleAuthProvider, 
   signOut as firebaseSignOut,
-  onAuthStateChanged
-} from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+  onAuthStateChanged,
+  User
+} from 'firebase/auth'
+import { auth } from '@/lib/firebase'
 
-export interface UserProfile {
-  phoneNumber: string | null;
-  notificationsEnabled: boolean;
+interface UserProfile {
+  phoneNumber: string | null
+  notificationsEnabled: boolean
 }
 
 interface AuthContextType {
-  user: User | null;
-  userProfile: UserProfile | null;
-  loading: boolean;
-  signInWithGoogle: () => Promise<void>;
-  signOut: () => Promise<void>;
-  updateUserProfile: (profile: Partial<UserProfile>) => Promise<void>;
+  user: User | null
+  loading: boolean
+  userProfile: UserProfile | null
+  signInWithGoogle: () => Promise<void>
+  signOut: () => Promise<void>
+  updateUserProfile: (profile: Partial<UserProfile>) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  userProfile: null,
   loading: true,
+  userProfile: null,
   signInWithGoogle: async () => {},
   signOut: async () => {},
   updateUserProfile: async () => {},
-});
+})
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  // Fetch user profile from Firestore
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      const userDoc = await getDoc(doc(db, 'users', userId));
-      if (userDoc.exists()) {
-        setUserProfile(userDoc.data() as UserProfile);
-      } else {
-        // Initialize default profile if none exists
-        const defaultProfile: UserProfile = {
-          phoneNumber: null,
-          notificationsEnabled: false,
-        };
-        await setDoc(doc(db, 'users', userId), defaultProfile);
-        setUserProfile(defaultProfile);
-      }
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-    }
-  };
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      if (user) {
-        await fetchUserProfile(user.uid);
-      } else {
-        setUserProfile(null);
-      }
-      setLoading(false);
-    });
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user)
+      setLoading(false)
+    })
 
-    return unsubscribe;
-  }, []);
+    return () => unsubscribe()
+  }, [])
 
   const signInWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
+    const provider = new GoogleAuthProvider()
     try {
-      const result = await signInWithPopup(auth, provider);
-      // Initialize user profile if it's a new user
-      const userDoc = await getDoc(doc(db, 'users', result.user.uid));
-      if (!userDoc.exists()) {
-        const defaultProfile: UserProfile = {
-          phoneNumber: null,
-          notificationsEnabled: false,
-        };
-        await setDoc(doc(db, 'users', result.user.uid), defaultProfile);
-        setUserProfile(defaultProfile);
-      }
+      await signInWithPopup(auth, provider)
     } catch (error) {
-      console.error('Error signing in with Google:', error);
+      console.error('Error signing in with Google:', error)
     }
-  };
+  }
 
   const signOut = async () => {
     try {
-      await firebaseSignOut(auth);
-      setUserProfile(null);
+      await firebaseSignOut(auth)
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('Error signing out:', error)
     }
-  };
+  }
 
   const updateUserProfile = async (profile: Partial<UserProfile>) => {
-    if (!user) throw new Error('No user logged in');
-    
+    if (!user) return
     try {
-      const userRef = doc(db, 'users', user.uid);
-      await setDoc(userRef, profile, { merge: true });
-      
-      // Update local state
-      setUserProfile(prev => prev ? { ...prev, ...profile } : null);
+      // Implement your profile update logic here
+      setUserProfile(prev => ({ ...prev!, ...profile }))
     } catch (error) {
-      console.error('Error updating user profile:', error);
-      throw new Error('Failed to update profile');
+      console.error('Error updating profile:', error)
     }
-  };
+  }
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        user, 
-        userProfile, 
-        loading, 
-        signInWithGoogle, 
-        signOut,
-        updateUserProfile 
-      }}
-    >
-      {!loading && children}
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      userProfile, 
+      signInWithGoogle, 
+      signOut,
+      updateUserProfile 
+    }}>
+      {children}
     </AuthContext.Provider>
-  );
+  )
 }
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => useContext(AuthContext)

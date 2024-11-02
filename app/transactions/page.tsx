@@ -85,6 +85,18 @@ export default function TransactionsPage() {
     }
   }
 
+  const pieChartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'bottom' as const,
+      },
+      title: {
+        display: false,
+      },
+    },
+  }
+
   if (loading) return <div className="flex justify-center items-center min-h-screen">Loading...</div>
   if (error) return <div className="text-red-500">{error}</div>
 
@@ -130,7 +142,10 @@ export default function TransactionsPage() {
         <div className="lg:col-span-1 bg-white rounded-xl shadow-sm p-6">
           <h2 className="text-xl font-semibold mb-4">Category Breakdown</h2>
           <div className="aspect-square">
-            <PieChart data={getCategoryBreakdown()} />
+            <PieChart 
+              data={getCategoryBreakdown()} 
+              options={pieChartOptions}
+            />
           </div>
         </div>
 

@@ -1,22 +1,18 @@
 'use client'
 
-import { Line, Pie } from 'react-chartjs-2'
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
-  BarElement,
   Title,
   Tooltip,
   Legend,
   TimeScale,
-  ArcElement,
-  Colors,
-  ChartData,
-  ChartOptions
+  ArcElement
 } from 'chart.js'
+import { Line, Pie } from 'react-chartjs-2'
 import 'chartjs-adapter-date-fns'
 
 // Register ChartJS components
@@ -25,31 +21,30 @@ ChartJS.register(
   LinearScale,
   PointElement,
   LineElement,
-  BarElement,
+  ArcElement,
   Title,
   Tooltip,
   Legend,
-  TimeScale,
-  ArcElement,
-  Colors
+  TimeScale
 )
 
-type MixedChartData = ChartData<'line' | 'bar'>
-type MixedChartOptions = ChartOptions<'line' | 'bar'>
-
-interface LineChartProps {
-  data: MixedChartData
-  options: MixedChartOptions
+interface ChartProps {
+  data: any
+  options: any
 }
 
-interface PieChartProps {
-  data: ChartData<'pie'>
+export function LineChart({ data, options }: ChartProps) {
+  return (
+    <div className="w-full h-full">
+      <Line data={data} options={options} />
+    </div>
+  )
 }
 
-export function LineChart({ data, options }: LineChartProps) {
-  return <Line data={data} options={options} />
-}
-
-export function PieChart({ data }: PieChartProps) {
-  return <Pie data={data} />
+export function PieChart({ data, options }: ChartProps) {
+  return (
+    <div className="w-full h-full">
+      <Pie data={data} options={options} />
+    </div>
+  )
 } 
