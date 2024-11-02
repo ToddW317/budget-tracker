@@ -9,6 +9,11 @@ import { LineChart } from '@/components/charts/ChartWrapper'
 import { useParams } from 'next/navigation'
 import { TooltipItem, ScriptableContext } from 'chart.js'
 
+interface ChartPoint {
+  x: number;  // timestamp instead of Date
+  y: number;
+}
+
 export default function CategoryDetailsPage() {
   const params = useParams()
   const categoryId = params.id as string
@@ -120,22 +125,24 @@ export default function CategoryDetailsPage() {
 
     // Calculate cumulative spending
     let cumulative = 0
-    const cumulativeData = filteredExpenses.map(expense => {
+    const cumulativeData: ChartPoint[] = filteredExpenses.map(expense => {
       cumulative += expense.amount
       return {
-        x: new Date(expense.date),
+        x: new Date(expense.date).getTime(),  // Convert Date to timestamp
         y: cumulative
       }
     })
+
+    const individualData: ChartPoint[] = filteredExpenses.map(expense => ({
+      x: new Date(expense.date).getTime(),  // Convert Date to timestamp
+      y: expense.amount
+    }))
 
     return {
       datasets: [
         {
           label: 'Individual Expenses',
-          data: filteredExpenses.map(expense => ({
-            x: new Date(expense.date),
-            y: expense.amount
-          })),
+          data: individualData,
           type: 'bar' as const,
           backgroundColor: 'rgba(59, 130, 246, 0.5)',
           borderColor: 'rgb(59, 130, 246)',
@@ -171,6 +178,10 @@ export default function CategoryDetailsPage() {
                 timeframe === 'month' ? 'week' as const : 
                 'month' as const
         },
+        ticks: {
+          source: 'auto',
+          autoSkip: true
+        },
         grid: {
           display: false
         }
@@ -184,6 +195,7 @@ export default function CategoryDetailsPage() {
           text: 'Individual Expenses ($)'
         },
         grid: {
+          drawBorder: false,
           borderDash: [2, 4]
         }
       },
@@ -196,7 +208,8 @@ export default function CategoryDetailsPage() {
           text: 'Cumulative Spending ($)'
         },
         grid: {
-          display: false
+          display: false,
+          drawBorder: false
         }
       }
     },
