@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import BudgetCategoryList from './BudgetCategoryList'
 import ExpenseList from './ExpenseList'
@@ -31,17 +31,7 @@ export default function BudgetDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (user) {
-      loadUserData()
-    } else {
-      setCategories([])
-      setExpenses([])
-      setLoading(false)
-    }
-  }, [user])
-
-  const loadUserData = async () => {
+  const loadUserData = useCallback(async () => {
     if (!user) return
     setLoading(true)
     setError(null)
@@ -57,7 +47,17 @@ export default function BudgetDashboard() {
       console.error('Error loading user data:', error)
     }
     setLoading(false)
-  }
+  }, [user])
+
+  useEffect(() => {
+    if (user) {
+      loadUserData()
+    } else {
+      setCategories([])
+      setExpenses([])
+      setLoading(false)
+    }
+  }, [user, loadUserData])
 
   const handleAddCategory = async (category: Omit<Category, 'id' | 'spent'>) => {
     if (!user) return

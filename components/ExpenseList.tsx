@@ -78,6 +78,14 @@ export default function ExpenseList({
           </>
         )}
       </div>
+      {onDeleteExpense && (
+        <button
+          onClick={() => onDeleteExpense(expense)}
+          className="text-red-500 hover:text-red-600"
+        >
+          Delete
+        </button>
+      )}
     </div>
   )
 } 

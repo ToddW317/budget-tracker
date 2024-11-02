@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Category, Expense } from '@/components/BudgetDashboard'
 import { getUserCategories, getUserExpenses } from '@/services/firebase'
@@ -18,13 +18,7 @@ export default function TransactionsPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [searchTerm, setSearchTerm] = useState('')
 
-  useEffect(() => {
-    if (user) {
-      loadData()
-    }
-  }, [user])
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const [categoriesData, expensesData] = await Promise.all([
         getUserCategories(user!.uid),
@@ -38,7 +32,13 @@ export default function TransactionsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
+
+  useEffect(() => {
+    if (user) {
+      loadData()
+    }
+  }, [user, loadData])
 
   const getFilteredAndSortedExpenses = () => {
     return expenses

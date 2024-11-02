@@ -13,7 +13,9 @@ import {
   Legend,
   TimeScale,
   ArcElement,
-  Colors
+  Colors,
+  ChartData,
+  ChartOptions
 } from 'chart.js'
 import 'chartjs-adapter-date-fns'
 
@@ -32,10 +34,19 @@ ChartJS.register(
   Colors
 )
 
-export function LineChart({ data, options }: { data: any, options: any }) {
+interface LineChartProps {
+  data: ChartData<'line' | 'bar'>
+  options: ChartOptions
+}
+
+interface PieChartProps {
+  data: ChartData<'pie'>
+}
+
+export function LineChart({ data, options }: LineChartProps) {
   return <Line data={data} options={options} />
 }
 
-export function PieChart({ data }: { data: any }) {
+export function PieChart({ data }: PieChartProps) {
   return <Pie data={data} />
 } 

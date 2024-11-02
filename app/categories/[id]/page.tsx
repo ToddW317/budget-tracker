@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Category, Expense } from '@/components/BudgetDashboard'
 import { getUserCategoryById, getUserExpensesByCategory, updateCategory, deleteExpense } from '@/services/firebase'
@@ -28,9 +28,9 @@ export default function CategoryDetailsPage() {
     if (user && categoryId) {
       loadCategoryData()
     }
-  }, [user, categoryId])
+  }, [user, categoryId, loadCategoryData])
 
-  const loadCategoryData = async () => {
+  const loadCategoryData = useCallback(async () => {
     try {
       const [categoryData, expensesData] = await Promise.all([
         getUserCategoryById(user!.uid, categoryId),
@@ -44,7 +44,7 @@ export default function CategoryDetailsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user, categoryId])
 
   const handleUpdateBudget = async () => {
     if (!category || !newBudget) return
