@@ -6,13 +6,15 @@ import {
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend,
   TimeScale,
-  ArcElement
+  ArcElement,
+  BarController
 } from 'chart.js'
-import { Line, Pie } from 'react-chartjs-2'
+import { Line, Pie, Bar } from 'react-chartjs-2'
 import 'chartjs-adapter-date-fns'
 
 // Register ChartJS components
@@ -21,6 +23,8 @@ ChartJS.register(
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
+  BarController,
   ArcElement,
   Title,
   Tooltip,
@@ -45,6 +49,14 @@ export function PieChart({ data, options }: ChartProps) {
   return (
     <div className="w-full h-full">
       <Pie data={data} options={options} />
+    </div>
+  )
+}
+
+export function BarChart({ data, options }: ChartProps) {
+  return (
+    <div className="w-full h-full">
+      <Bar data={data} options={options} />
     </div>
   )
 } 
