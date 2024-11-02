@@ -198,7 +198,7 @@ export default function CategoryDetailsPage() {
           text: 'Individual Expenses ($)'
         },
         grid: {
-          borderDash: [2, 4]
+          display: true
         },
         border: {
           display: false
