@@ -34,9 +34,12 @@ ChartJS.register(
   Colors
 )
 
+type MixedChartData = ChartData<'line' | 'bar'>
+type MixedChartOptions = ChartOptions<'line' | 'bar'>
+
 interface LineChartProps {
-  data: ChartData<'line' | 'bar'>
-  options: ChartOptions
+  data: MixedChartData
+  options: MixedChartOptions
 }
 
 interface PieChartProps {

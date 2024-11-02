@@ -7,7 +7,7 @@ import { getUserCategoryById, getUserExpensesByCategory, updateCategory, deleteE
 import Link from 'next/link'
 import { LineChart } from '@/components/charts/ChartWrapper'
 import { useParams } from 'next/navigation'
-import { TooltipItem, ScriptableContext } from 'chart.js'
+import { TooltipItem, ScriptableContext, ChartOptions } from 'chart.js'
 
 interface ChartPoint {
   x: number;  // timestamp instead of Date
@@ -164,22 +164,22 @@ export default function CategoryDetailsPage() {
     }
   }
 
-  const chartOptions = {
+  const chartOptions: ChartOptions<'line'> = {
     responsive: true,
     interaction: {
-      mode: 'index' as const,
+      mode: 'index',
       intersect: false,
     },
     scales: {
       x: {
-        type: 'time' as const,
+        type: 'time',
         time: {
-          unit: timeframe === 'week' ? 'day' as const : 
-                timeframe === 'month' ? 'week' as const : 
-                'month' as const
+          unit: timeframe === 'week' ? 'day' : 
+                timeframe === 'month' ? 'week' : 
+                'month'
         },
         ticks: {
-          source: 'auto',
+          source: 'auto' as const,
           autoSkip: true
         },
         grid: {
@@ -187,9 +187,9 @@ export default function CategoryDetailsPage() {
         }
       },
       y: {
-        type: 'linear' as const,
+        type: 'linear',
         display: true,
-        position: 'left' as const,
+        position: 'left',
         title: {
           display: true,
           text: 'Individual Expenses ($)'
@@ -200,9 +200,9 @@ export default function CategoryDetailsPage() {
         }
       },
       y1: {
-        type: 'linear' as const,
+        type: 'linear',
         display: true,
-        position: 'right' as const,
+        position: 'right',
         title: {
           display: true,
           text: 'Cumulative Spending ($)'
@@ -215,7 +215,7 @@ export default function CategoryDetailsPage() {
     },
     plugins: {
       legend: {
-        position: 'top' as const,
+        position: 'top',
         labels: {
           usePointStyle: true,
           padding: 20
@@ -231,7 +231,7 @@ export default function CategoryDetailsPage() {
         boxPadding: 6,
         usePointStyle: true,
         callbacks: {
-          label: function(context: TooltipItem<'line' | 'bar'>) {
+          label: function(context) {
             const value = context.parsed.y;
             return `$${typeof value === 'number' ? value.toFixed(2) : '0.00'}`;
           }
