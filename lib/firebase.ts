@@ -3,14 +3,14 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-    apiKey: "AIzaSyAor_jzteizL008pj8XDMQrToTF9F6hwAE",
-    authDomain: "budget-tracker-dc9de.firebaseapp.com",
-    projectId: "budget-tracker-dc9de",
-    storageBucket: "budget-tracker-dc9de.firebasestorage.app",
-    messagingSenderId: "560153447620",
-    appId: "1:560153447620:web:8be5ac9d88e0db92d44d91",
-    measurementId: "G-B0Q2WZMSPW"
-  };
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+};
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);

@@ -11,10 +11,17 @@
   "dependencies": {
     "@firebase/auth": "^1.8.0",
     "@firebase/firestore": "^4.7.4",
+    "@types/chart.js": "^2.9.41",
+    "@types/twilio": "^3.19.3",
+    "chart.js": "^4.4.6",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "date-fns": "^4.1.0",
     "firebase": "^11.0.1",
     "next": "15.0.2",
     "react": "19.0.0-rc-02c0e824-20241028",
-    "react-dom": "19.0.0-rc-02c0e824-20241028"
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "19.0.0-rc-02c0e824-20241028",
+    "twilio": "^4.20.0"
   },
   "devDependencies": {
     "@types/node": "^20",
