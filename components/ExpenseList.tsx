@@ -66,10 +66,10 @@ export default function ExpenseList({
             })}
             
             {expenses.length > RECENT_EXPENSES_LIMIT && (
-              <div className="text-center pt-2">
+              <div className="text-center py-4 px-2 w-full">
                 <Link
                   href="/transactions"
-                  className="text-blue-500 hover:text-blue-600 text-sm font-medium"
+                  className="inline-block w-full sm:w-auto px-6 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors duration-200"
                 >
                   View All Transactions →
                 </Link>
