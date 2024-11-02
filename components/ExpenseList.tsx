@@ -12,7 +12,7 @@ interface Props {
 export default function ExpenseList({
   expenses,
   categories,
-  onDeleteExpense,
+  onDeleteExpense
 }: Props) {
   const RECENT_EXPENSES_LIMIT = 5
 
@@ -78,14 +78,6 @@ export default function ExpenseList({
           </>
         )}
       </div>
-      {onDeleteExpense && (
-        <button
-          onClick={() => onDeleteExpense(expense)}
-          className="text-red-500 hover:text-red-600"
-        >
-          Delete
-        </button>
-      )}
     </div>
   )
 } 

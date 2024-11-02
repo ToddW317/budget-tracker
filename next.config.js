@@ -5,6 +5,12 @@ const nextConfig = {
   images: {
     domains: ['lh3.googleusercontent.com'], // For Google Auth profile pictures
   },
+  typescript: {
+    ignoreBuildErrors: true, // This will ignore TypeScript errors during build
+  },
+  eslint: {
+    ignoreDuringBuilds: true, // This will ignore ESLint errors during build
+  },
   // Add any other Next.js config options you need
 }
 

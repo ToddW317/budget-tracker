@@ -225,7 +225,6 @@ export default function BudgetDashboard() {
             <ExpenseList 
               expenses={expenses} 
               categories={categories}
-              onUpdateCategory={handleUpdateCategory}
               onDeleteExpense={handleDeleteExpense}
             />
           </div>
