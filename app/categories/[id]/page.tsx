@@ -7,7 +7,7 @@ import { getUserCategoryById, getUserExpensesByCategory, updateCategory, deleteE
 import Link from 'next/link'
 import { LineChart } from '@/components/charts/ChartWrapper'
 import { useParams } from 'next/navigation'
-import { TooltipItem } from 'chart.js'
+import { TooltipItem, ScriptableContext } from 'chart.js'
 
 export default function CategoryDetailsPage() {
   const params = useParams()
@@ -167,7 +167,9 @@ export default function CategoryDetailsPage() {
       x: {
         type: 'time' as const,
         time: {
-          unit: timeframe === 'week' ? 'day' : timeframe === 'month' ? 'week' : 'month'
+          unit: timeframe === 'week' ? 'day' as const : 
+                timeframe === 'month' ? 'week' as const : 
+                'month' as const
         },
         grid: {
           display: false
@@ -217,7 +219,8 @@ export default function CategoryDetailsPage() {
         usePointStyle: true,
         callbacks: {
           label: function(context: TooltipItem<'line' | 'bar'>) {
-            return `$${context.raw.y.toFixed(2)}`
+            const value = context.parsed.y;
+            return `$${typeof value === 'number' ? value.toFixed(2) : '0.00'}`;
           }
         }
       }
