@@ -64,7 +64,7 @@ export default function BudgetDashboard() {
     setError(null)
     try {
       const newCategory = await addCategory(user.uid, category)
-      setCategories(prev => [...prev, newCategory as Category])
+      setCategories(prev => [...prev, newCategory])
     } catch (error) {
       setError('Failed to add category. Please try again.')
       console.error('Error adding category:', error)
@@ -78,9 +78,16 @@ export default function BudgetDashboard() {
       const newExpense = await addExpense(user.uid, expense);
       if (!newExpense) throw new Error('Failed to add expense');
       
-      setExpenses(prev => [...prev, newExpense]);
+      const completeExpense: Expense = {
+        id: newExpense.id || Date.now().toString(),
+        categoryId: expense.categoryId,
+        amount: expense.amount,
+        description: expense.description,
+        date: expense.date
+      };
       
-      // Update local category state
+      setExpenses(prev => [...prev, completeExpense]);
+      
       setCategories(prev => prev.map(category => {
         if (category.id === expense.categoryId) {
           return {
@@ -158,7 +165,7 @@ export default function BudgetDashboard() {
           className="flex items-center space-x-3 bg-white px-6 py-3 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 border border-gray-200"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
-            {/* ... existing Google icon SVG ... */}
+            {/* Google icon SVG */}
           </svg>
           <span className="text-gray-700 font-medium">Sign in with Google</span>
         </button>

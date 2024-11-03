@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { FrequencyType } from '@/types/bills'
+import { Bill, FrequencyType } from '@/types/bills'
 import { useAuth } from '@/contexts/AuthContext'
 import { addBill } from '@/services/firebase'
 import { formatDateForDB } from '@/utils/dates'

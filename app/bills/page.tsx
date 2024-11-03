@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import BillCalendar from '@/components/bills/BillCalendar'
 import BillList from '@/components/bills/BillList'
@@ -17,7 +17,7 @@ export default function BillsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!user) return
     setLoading(true)
     try {
@@ -33,11 +33,11 @@ export default function BillsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
 
   useEffect(() => {
     loadData()
-  }, [user])
+  }, [loadData])
 
   const handleBillsUpdate = async () => {
     await loadData()

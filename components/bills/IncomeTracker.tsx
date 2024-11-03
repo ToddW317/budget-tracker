@@ -8,10 +8,10 @@ import { format } from 'date-fns'
 
 interface Props {
   incomes: Income[]
-  onSuccess?: () => void
+  onUpdate?: () => void
 }
 
-export default function IncomeTracker({ incomes: initialIncomes, onSuccess }: Props) {
+export default function IncomeTracker({ incomes: initialIncomes, onUpdate }: Props) {
   const { user } = useAuth()
   const [incomes, setIncomes] = useState<Income[]>(initialIncomes)
   const [showAddForm, setShowAddForm] = useState(false)
@@ -58,7 +58,7 @@ export default function IncomeTracker({ incomes: initialIncomes, onSuccess }: Pr
         receiveDate: '',
         description: ''
       })
-      onSuccess?.()
+      onUpdate?.()
     } catch (error) {
       console.error('Error adding income:', error)
       setError('Failed to add income. Please try again.')
@@ -74,7 +74,7 @@ export default function IncomeTracker({ incomes: initialIncomes, onSuccess }: Pr
       await deleteIncome(user.uid, incomeId)
       // Update local state
       setIncomes(prev => prev.filter(income => income.id !== incomeId))
-      onSuccess?.()
+      onUpdate?.()
     } catch (error) {
       console.error('Error deleting income:', error)
     } finally {
