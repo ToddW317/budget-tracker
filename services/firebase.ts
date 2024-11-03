@@ -10,9 +10,12 @@ import {
   getDoc,
   runTransaction,
   writeBatch,
+  deleteDoc,
+  orderBy,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Category, Expense } from '@/components/BudgetDashboard';
+import { Category, Expense, Bill, Income } from '@/components/BudgetDashboard';
+import { formatDateForDB } from '@/utils/dates';
 
 export const addCategory = async (userId: string, category: Omit<Category, 'id' | 'spent'>) => {
   try {
@@ -20,7 +23,7 @@ export const addCategory = async (userId: string, category: Omit<Category, 'id' 
       name: category.name,
       budget: category.budget,
       spent: 0,
-      userId: userId,
+      userId,
       createdAt: serverTimestamp(),
     });
 
@@ -49,6 +52,10 @@ export const addExpense = async (userId: string, expense: Omit<Expense, 'id'>) =
         throw new Error('Category not found');
       }
 
+      if (categoryDoc.data().userId !== userId) {
+        throw new Error('Unauthorized');
+      }
+
       categoryData = categoryDoc.data();
       const currentSpent = categoryData.spent || 0;
       const newSpent = currentSpent + expense.amount;
@@ -57,17 +64,16 @@ export const addExpense = async (userId: string, expense: Omit<Expense, 'id'>) =
       transaction.update(categoryRef, {
         spent: newSpent,
       });
-    });
 
-    // Add the expense document
-    const expenseRef = await addDoc(collection(db, 'expenses'), {
-      ...expense,
-      userId,
-      createdAt: serverTimestamp(),
+      const expenseRef = doc(collection(db, 'expenses'));
+      transaction.set(expenseRef, {
+        ...expense,
+        userId,
+        createdAt: serverTimestamp(),
+      });
     });
 
     return {
-      id: expenseRef.id,
       ...expense,
     };
   } catch (error) {
@@ -202,22 +208,37 @@ export const deleteCategory = async (userId: string, categoryId: string) => {
 export const deleteExpense = async (userId: string, expenseId: string, categoryId: string, amount: number) => {
   try {
     await runTransaction(db, async (transaction) => {
-      // Delete the expense
+      // First, do all reads
       const expenseRef = doc(db, 'expenses', expenseId);
-      transaction.delete(expenseRef);
+      const expenseDoc = await transaction.get(expenseRef);
       
-      // Update category spent amount
+      if (!expenseDoc.exists()) {
+        throw new Error('Expense not found');
+      }
+
       const categoryRef = doc(db, 'categories', categoryId);
       const categoryDoc = await transaction.get(categoryRef);
       
       if (!categoryDoc.exists()) {
         throw new Error('Category not found');
       }
+
+      // Verify ownership
+      if (expenseDoc.data().userId !== userId) {
+        throw new Error('Unauthorized');
+      }
       
+      // Then, do all writes
       const currentSpent = categoryDoc.data().spent || 0;
+      
+      // Update category spent amount
       transaction.update(categoryRef, {
-        spent: currentSpent - amount,
+        spent: Math.max(0, currentSpent - amount), // Prevent negative values
+        updatedAt: serverTimestamp()
       });
+      
+      // Delete the expense
+      transaction.delete(expenseRef);
     });
     
     return true;
@@ -285,3 +306,182 @@ export const updateExpense = async (userId: string, expenseId: string, updates: 
     throw new Error('Failed to update expense');
   }
 };
+
+// New interfaces
+interface FirebaseBill extends Omit<Bill, 'id'> {}
+interface FirebaseIncome extends Omit<Income, 'id'> {}
+
+// Bills Collection Functions
+export async function getUserBills(userId: string): Promise<Bill[]> {
+  try {
+    const billsRef = collection(db, 'users', userId, 'bills');
+    const q = query(billsRef, orderBy('dueDate', 'asc'));
+    const snapshot = await getDocs(q);
+    
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Bill[];
+  } catch (error) {
+    console.error('Error getting bills:', error);
+    throw error;
+  }
+}
+
+export async function addBill(userId: string, bill: Omit<Bill, 'id'>): Promise<Bill> {
+  try {
+    const billsRef = collection(db, 'users', userId, 'bills');
+    const docRef = await addDoc(billsRef, {
+      ...bill,
+      createdAt: serverTimestamp()
+    });
+    
+    return {
+      id: docRef.id,
+      ...bill
+    };
+  } catch (error) {
+    console.error('Error adding bill:', error);
+    throw error;
+  }
+}
+
+export async function updateBill(userId: string, billId: string, updates: Partial<Bill>): Promise<void> {
+  try {
+    const billRef = doc(db, 'users', userId, 'bills', billId);
+    await updateDoc(billRef, {
+      ...updates,
+      updatedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error('Error updating bill:', error);
+    throw error;
+  }
+}
+
+export async function deleteBill(userId: string, billId: string): Promise<void> {
+  try {
+    const billRef = doc(db, 'users', userId, 'bills', billId);
+    await deleteDoc(billRef);
+  } catch (error) {
+    console.error('Error deleting bill:', error);
+    throw error;
+  }
+}
+
+// Income Collection Functions
+export async function getUserIncomes(userId: string): Promise<Income[]> {
+  try {
+    const incomesRef = collection(db, 'users', userId, 'incomes');
+    const q = query(incomesRef, orderBy('receiveDate', 'asc'));
+    const snapshot = await getDocs(q);
+    
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Income[];
+  } catch (error) {
+    console.error('Error getting incomes:', error);
+    throw error;
+  }
+}
+
+export async function addIncome(userId: string, income: Omit<Income, 'id'>): Promise<Income> {
+  try {
+    const incomesRef = collection(db, 'users', userId, 'incomes');
+    const docRef = await addDoc(incomesRef, {
+      ...income,
+      createdAt: serverTimestamp()
+    });
+    
+    return {
+      id: docRef.id,
+      ...income
+    };
+  } catch (error) {
+    console.error('Error adding income:', error);
+    throw error;
+  }
+}
+
+export async function updateIncome(userId: string, incomeId: string, updates: Partial<Income>): Promise<void> {
+  try {
+    const incomeRef = doc(db, 'users', userId, 'incomes', incomeId);
+    await updateDoc(incomeRef, {
+      ...updates,
+      updatedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error('Error updating income:', error);
+    throw error;
+  }
+}
+
+export async function deleteIncome(userId: string, incomeId: string): Promise<void> {
+  try {
+    const incomeRef = doc(db, 'users', userId, 'incomes', incomeId);
+    await deleteDoc(incomeRef);
+  } catch (error) {
+    console.error('Error deleting income:', error);
+    throw error;
+  }
+}
+
+export async function toggleBillPaid(
+  userId: string, 
+  billId: string, 
+  bill: Bill, 
+  categoryId?: string
+): Promise<void> {
+  try {
+    await runTransaction(db, async (transaction) => {
+      // First, do all reads
+      const billRef = doc(db, 'users', userId, 'bills', billId);
+      
+      let categoryDoc;
+      if (!bill.isPaid && categoryId) {
+        const categoryRef = doc(db, 'categories', categoryId);
+        categoryDoc = await transaction.get(categoryRef);
+        if (!categoryDoc.exists()) {
+          throw new Error('Category not found');
+        }
+      }
+
+      // Then, do all writes
+      const updates = {
+        isPaid: !bill.isPaid,
+        lastPaid: !bill.isPaid ? formatDateForDB(new Date()) : null
+      };
+      
+      transaction.update(billRef, {
+        ...updates,
+        updatedAt: serverTimestamp()
+      });
+
+      // If marking as paid and we have a category, create an expense
+      if (!bill.isPaid && categoryId && categoryDoc) {
+        const currentSpent = categoryDoc.data().spent || 0;
+        
+        // Update category spent amount
+        transaction.update(doc(db, 'categories', categoryId), {
+          spent: currentSpent + bill.amount,
+        });
+
+        // Create expense
+        const expenseRef = doc(collection(db, 'expenses'));
+        transaction.set(expenseRef, {
+          userId,
+          categoryId,
+          amount: bill.amount,
+          description: `Bill Payment: ${bill.title}`,
+          date: formatDateForDB(new Date()),
+          createdAt: serverTimestamp(),
+          billId: billId
+        });
+      }
+    });
+  } catch (error) {
+    console.error('Error updating bill:', error);
+    throw error;
+  }
+}
