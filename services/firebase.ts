@@ -362,12 +362,14 @@ export async function addBill(userId: string, bill: Omit<Bill, 'id'>): Promise<B
     const billsRef = collection(db, 'users', userId, 'bills');
     const docRef = await addDoc(billsRef, {
       ...bill,
+      isRecurring: bill.isRecurring || false,
       createdAt: serverTimestamp()
     });
     
     return {
       id: docRef.id,
-      ...bill
+      ...bill,
+      isRecurring: bill.isRecurring || false
     };
   } catch (error) {
     console.error('Error adding bill:', error);
@@ -377,7 +379,16 @@ export async function addBill(userId: string, bill: Omit<Bill, 'id'>): Promise<B
 
 export async function updateBill(userId: string, billId: string, updates: Partial<Bill>): Promise<void> {
   try {
-    const billRef = doc(db, 'users', userId, 'bills', billId);
+    // Ensure we're using the base bill ID
+    const baseId = billId.split('_')[0];
+    const billRef = doc(db, 'users', userId, 'bills', baseId);
+    
+    // Verify the document exists before updating
+    const billDoc = await getDoc(billRef);
+    if (!billDoc.exists()) {
+      throw new Error('Bill not found');
+    }
+
     await updateDoc(billRef, {
       ...updates,
       updatedAt: serverTimestamp()

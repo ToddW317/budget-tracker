@@ -1,20 +1,25 @@
 'use client'
 
+import { useState } from 'react'
 import { Category, Expense } from './BudgetDashboard'
 import Link from 'next/link'
 import { formatDisplayDate } from '@/utils/dates'
+import EditExpenseModal from './expenses/EditExpenseModal'
 
 interface Props {
   expenses: Expense[]
   categories: Category[]
   onDeleteExpense?: (expense: Expense) => Promise<void>
+  onUpdate: () => Promise<void>
 }
 
 export default function ExpenseList({
   expenses,
   categories,
-  onDeleteExpense
+  onDeleteExpense,
+  onUpdate
 }: Props) {
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null)
   const RECENT_EXPENSES_LIMIT = 5
 
   const sortedExpenses = [...expenses].sort((a, b) => 
@@ -22,6 +27,10 @@ export default function ExpenseList({
   )
 
   const recentExpenses = sortedExpenses.slice(0, RECENT_EXPENSES_LIMIT)
+
+  const handleExpenseClick = (expense: Expense) => {
+    setSelectedExpense(expense)
+  }
 
   return (
     <div>
@@ -36,10 +45,10 @@ export default function ExpenseList({
               if (!category) return null
               
               return (
-                <Link
+                <div
                   key={expense.id}
-                  href={`/categories/${category.id}`}
-                  className="block"
+                  onClick={() => handleExpenseClick(expense)}
+                  className="cursor-pointer"
                 >
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
                     <div className="flex items-start space-x-3">
@@ -62,7 +71,7 @@ export default function ExpenseList({
                       </p>
                     </div>
                   </div>
-                </Link>
+                </div>
               )
             })}
             
@@ -79,6 +88,15 @@ export default function ExpenseList({
           </>
         )}
       </div>
+
+      {selectedExpense && (
+        <EditExpenseModal
+          expense={selectedExpense}
+          category={categories.find(c => c.id === selectedExpense.categoryId)!}
+          onClose={() => setSelectedExpense(null)}
+          onUpdate={onUpdate}
+        />
+      )}
     </div>
   )
 } 

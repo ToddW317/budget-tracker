@@ -91,17 +91,21 @@ export const getRecurringItemsForRange = (
   endDate: Date
 ): (Bill | Income)[] => {
   const allOccurrences = items.flatMap(item => {
-    if ('dueDate' in item) {
-      // It's a bill
+    if ('dueDate' in item && item.isRecurring) {
+      // It's a recurring bill
       return generateFutureBillOccurrences(item as Bill, 12);
-    } else {
-      // It's income
+    } else if ('receiveDate' in item && item.isRecurring) {
+      // It's a recurring income
       return generateFutureIncomeOccurrences(item as Income, 12);
     }
+    // Non-recurring items are returned as-is
+    return [item];
   });
 
   return allOccurrences.filter(item => {
-    const itemDate = parseISO('dueDate' in item ? item.dueDate : item.receiveDate);
+    const itemDate = parseISO(
+      'dueDate' in item ? item.dueDate : (item as Income).receiveDate
+    );
     return isBefore(itemDate, endDate) && isBefore(startDate, itemDate);
   });
 };

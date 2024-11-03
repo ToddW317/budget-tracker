@@ -38,11 +38,18 @@ export type MonthlyBudget = {
 
 export type Bill = {
   id: string;
+  virtualId?: string;
   title: string;
   amount: number;
   dueDate: string;
   isPaid: boolean;
   lastPaid: string | null;
+  isRecurring: boolean;
+  frequency?: 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly' | 'custom';
+  customFrequencyDays?: number;
+  categoryId?: string;
+  nextDueDate?: string;
+  notes?: string;
 };
 
 export type Income = {
@@ -285,6 +292,7 @@ export default function BudgetDashboard() {
               expenses={expenses} 
               categories={categories}
               onDeleteExpense={handleDeleteExpense}
+              onUpdate={loadUserData}
             />
           </div>
         </div>
