@@ -16,6 +16,7 @@ export default function BillsPage() {
   const [incomes, setIncomes] = useState<Income[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showAddBill, setShowAddBill] = useState(false)
 
   const loadData = useCallback(async () => {
     if (!user) return
@@ -64,75 +65,117 @@ export default function BillsPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
       {error && (
-        <div className="mb-4 p-4 bg-red-50 text-red-700 rounded-lg">
+        <div className="p-4 bg-red-50 text-red-700 rounded-lg">
           {error}
         </div>
       )}
 
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">Bills & Income Calendar</h1>
-        <div className="flex space-x-2">
+      {/* Header Section */}
+      <div className="flex flex-wrap justify-between items-center gap-4">
+        <h1 className="text-2xl font-bold text-gray-800">Bills & Income Tracker</h1>
+        <div className="flex space-x-4">
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setView('calendar')}
+              className={`px-4 py-2 rounded-lg ${
+                view === 'calendar' 
+                  ? 'bg-blue-500 text-white' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Calendar View
+            </button>
+            <button
+              onClick={() => setView('list')}
+              className={`px-4 py-2 rounded-lg ${
+                view === 'list' 
+                  ? 'bg-blue-500 text-white' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              List View
+            </button>
+          </div>
           <button
-            onClick={() => setView('calendar')}
-            className={`px-4 py-2 rounded-lg ${
-              view === 'calendar' 
-                ? 'bg-blue-500 text-white' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            onClick={() => setShowAddBill(!showAddBill)}
+            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
           >
-            Calendar View
-          </button>
-          <button
-            onClick={() => setView('list')}
-            className={`px-4 py-2 rounded-lg ${
-              view === 'list' 
-                ? 'bg-blue-500 text-white' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            List View
+            {showAddBill ? 'Hide Form' : 'Add New Bill'}
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          {view === 'calendar' ? (
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <BillCalendar 
-                bills={bills} 
-                onUpdate={handleBillsUpdate}
-              />
-            </div>
-          ) : (
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <BillList 
-                bills={bills} 
-                onUpdate={handleBillsUpdate}
-              />
-            </div>
-          )}
+      {/* Add Bill Form (Collapsible) */}
+      {showAddBill && (
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <h2 className="text-xl font-semibold mb-4">Add New Bill</h2>
+          <AddBillForm 
+            onSuccess={(newBill) => {
+              setBills(prev => [...prev, newBill])
+              setShowAddBill(false)
+            }} 
+          />
         </div>
+      )}
 
-        <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-xl font-semibold mb-4">Add New Bill</h2>
-            <AddBillForm 
-              onSuccess={(newBill) => {
-                setBills(prev => [...prev, newBill])
-              }} 
-            />
-          </div>
+      {/* Main Calendar/List View */}
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        {view === 'calendar' ? (
+          <BillCalendar 
+            bills={bills} 
+            onUpdate={handleBillsUpdate}
+          />
+        ) : (
+          <BillList 
+            bills={bills} 
+            onUpdate={handleBillsUpdate}
+          />
+        )}
+      </div>
 
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-xl font-semibold mb-4">Income Tracker</h2>
-            <IncomeTracker 
-              incomes={incomes} 
-              onUpdate={handleIncomesUpdate}
-            />
+      {/* Income Tracker Section */}
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold">Income Tracker</h2>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-500">
+              Total Monthly Income: 
+              <span className="ml-2 font-semibold text-green-600">
+                ${incomes.reduce((sum, income) => sum + income.amount, 0).toFixed(2)}
+              </span>
+            </span>
           </div>
+        </div>
+        <IncomeTracker 
+          incomes={incomes} 
+          onUpdate={handleIncomesUpdate}
+        />
+      </div>
+
+      {/* Summary Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-blue-50 rounded-xl p-6">
+          <h3 className="text-sm font-medium text-blue-800">Total Bills</h3>
+          <p className="text-2xl font-bold text-blue-900">
+            ${bills.reduce((sum, bill) => sum + bill.amount, 0).toFixed(2)}/month
+          </p>
+        </div>
+        <div className="bg-green-50 rounded-xl p-6">
+          <h3 className="text-sm font-medium text-green-800">Total Income</h3>
+          <p className="text-2xl font-bold text-green-900">
+            ${incomes.reduce((sum, income) => sum + income.amount, 0).toFixed(2)}/month
+          </p>
+        </div>
+        <div className="bg-purple-50 rounded-xl p-6">
+          <h3 className="text-sm font-medium text-purple-800">Net Income</h3>
+          <p className="text-2xl font-bold text-purple-900">
+            ${(
+              incomes.reduce((sum, income) => sum + income.amount, 0) -
+              bills.reduce((sum, bill) => sum + bill.amount, 0)
+            ).toFixed(2)}/month
+          </p>
         </div>
       </div>
     </div>

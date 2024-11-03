@@ -14,8 +14,9 @@ import {
   orderBy,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Category, Expense, Bill, Income } from '@/components/BudgetDashboard';
+import { Category, Expense, Bill, Income, MonthlyBudget } from '@/components/BudgetDashboard';
 import { formatDateForDB } from '@/utils/dates';
+import { format } from 'date-fns';
 
 export const addCategory = async (userId: string, category: Omit<Category, 'id' | 'spent'>) => {
   try {
@@ -101,18 +102,29 @@ export const getUserCategories = async (userId: string): Promise<Category[]> => 
 
 export const getUserExpenses = async (userId: string): Promise<Expense[]> => {
   try {
-    const q = query(collection(db, 'expenses'), where('userId', '==', userId));
+    const q = query(
+      collection(db, 'expenses'),
+      where('userId', '==', userId),
+      orderBy('date', 'desc')
+    );
     const querySnapshot = await getDocs(q);
     
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      categoryId: doc.data().categoryId,
-      amount: doc.data().amount,
-      description: doc.data().description,
-      date: doc.data().date,
-    }));
-  } catch (error) {
+    return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        categoryId: data.categoryId,
+        amount: data.amount,
+        description: data.description,
+        date: data.date,
+        month: data.month || format(new Date(data.date), 'yyyy-MM')
+      };
+    });
+  } catch (error: any) {
     console.error('Error getting expenses:', error);
+    if (error.message?.includes('requires an index')) {
+      throw error;
+    }
     throw new Error('Failed to fetch expenses');
   }
 };
@@ -248,18 +260,22 @@ export const deleteExpense = async (userId: string, expenseId: string, categoryI
   }
 };
 
-export const getUserCategoryById = async (userId: string, categoryId: string): Promise<Category> => {
+export const getUserCategoryById = async (
+  userId: string,
+  categoryId: string
+): Promise<Category> => {
   try {
     const categoryDoc = await getDoc(doc(db, 'categories', categoryId));
     if (!categoryDoc.exists() || categoryDoc.data().userId !== userId) {
       throw new Error('Category not found');
     }
     
+    const data = categoryDoc.data();
     return {
       id: categoryDoc.id,
-      name: categoryDoc.data().name,
-      budget: categoryDoc.data().budget,
-      spent: categoryDoc.data().spent || 0,
+      name: data.name,
+      budget: data.budget,
+      spent: data.spent || 0,
     };
   } catch (error) {
     console.error('Error getting category:', error);
@@ -267,25 +283,38 @@ export const getUserCategoryById = async (userId: string, categoryId: string): P
   }
 };
 
-export const getUserExpensesByCategory = async (userId: string, categoryId: string): Promise<Expense[]> => {
+export const getUserExpensesByCategory = async (
+  userId: string,
+  categoryId: string,
+  month: string
+): Promise<Expense[]> => {
   try {
     const q = query(
       collection(db, 'expenses'),
       where('userId', '==', userId),
-      where('categoryId', '==', categoryId)
+      where('categoryId', '==', categoryId),
+      where('month', '==', month),
+      orderBy('date', 'desc')
     );
     const querySnapshot = await getDocs(q);
     
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      categoryId: doc.data().categoryId,
-      amount: doc.data().amount,
-      description: doc.data().description,
-      date: doc.data().date,
-    }));
-  } catch (error) {
+    return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        categoryId: data.categoryId,
+        amount: data.amount,
+        description: data.description,
+        date: data.date,
+        month: data.month
+      };
+    });
+  } catch (error: any) {
     console.error('Error getting category expenses:', error);
-    throw new Error('Failed to fetch expenses');
+    if (error.message?.includes('requires an index')) {
+      throw error;
+    }
+    throw new Error('Failed to fetch category expenses');
   }
 };
 
@@ -485,3 +514,143 @@ export async function toggleBillPaid(
     throw error;
   }
 }
+
+// Add these new functions
+export const getMonthlyBudgets = async (userId: string, month: string): Promise<MonthlyBudget[]> => {
+  try {
+    const q = query(
+      collection(db, 'monthlyBudgets'),
+      where('userId', '==', userId),
+      where('month', '==', month)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as MonthlyBudget[];
+  } catch (error) {
+    console.error('Error getting monthly budgets:', error);
+    throw error;
+  }
+};
+
+export const getMonthlyExpenses = async (userId: string, month: string): Promise<Expense[]> => {
+  try {
+    const q = query(
+      collection(db, 'expenses'),
+      where('userId', '==', userId),
+      where('month', '==', month),
+      orderBy('date', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    
+    return snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        categoryId: data.categoryId,
+        amount: data.amount,
+        description: data.description,
+        date: data.date,
+        month: data.month
+      };
+    });
+  } catch (error: any) {
+    console.error('Error getting monthly expenses:', error);
+    if (error.message?.includes('requires an index')) {
+      throw error;
+    }
+    throw new Error('Failed to fetch monthly expenses');
+  }
+};
+
+export const updateMonthlyBudget = async (
+  userId: string,
+  budgetId: string,
+  updates: Partial<MonthlyBudget>
+): Promise<void> => {
+  try {
+    const budgetRef = doc(db, 'monthlyBudgets', budgetId);
+    await updateDoc(budgetRef, {
+      ...updates,
+      updatedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error('Error updating monthly budget:', error);
+    throw error;
+  }
+};
+
+// Add function to copy current categories to monthly budgets
+export const initializeMonthlyBudgets = async (userId: string, month: string): Promise<void> => {
+  try {
+    const categories = await getUserCategories(userId);
+    const batch = writeBatch(db);
+    
+    for (const category of categories) {
+      const monthlyBudgetRef = doc(collection(db, 'monthlyBudgets'));
+      batch.set(monthlyBudgetRef, {
+        userId,
+        month,
+        categoryId: category.id,
+        budget: category.budget,
+        spent: 0,
+        createdAt: serverTimestamp()
+      });
+    }
+    
+    await batch.commit();
+  } catch (error) {
+    console.error('Error initializing monthly budgets:', error);
+    throw error;
+  }
+};
+
+// Add function to get or create monthly budgets
+export const getOrCreateMonthlyBudgets = async (userId: string, month: string): Promise<MonthlyBudget[]> => {
+  try {
+    // First, get existing monthly budgets
+    const existingBudgets = await getMonthlyBudgets(userId, month);
+    
+    // If we have budgets for this month, return them
+    if (existingBudgets.length > 0) {
+      return existingBudgets;
+    }
+
+    // If no budgets exist for this month, create them from current categories
+    const categories = await getUserCategories(userId);
+    const batch = writeBatch(db);
+    
+    // Create a new monthly budget for each category
+    const newBudgets: MonthlyBudget[] = [];
+    
+    for (const category of categories) {
+      const monthlyBudgetRef = doc(collection(db, 'monthlyBudgets'));
+      const newBudget: MonthlyBudget = {
+        id: monthlyBudgetRef.id,
+        userId,
+        month,
+        categoryId: category.id,
+        budget: category.budget,
+        spent: 0,
+      };
+      
+      batch.set(monthlyBudgetRef, {
+        userId,
+        month,
+        categoryId: category.id,
+        budget: category.budget,
+        spent: 0,
+        createdAt: serverTimestamp()
+      });
+      
+      newBudgets.push(newBudget);
+    }
+    
+    await batch.commit();
+    return newBudgets;
+  } catch (error) {
+    console.error('Error getting/creating monthly budgets:', error);
+    throw error;
+  }
+};

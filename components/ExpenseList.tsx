@@ -2,6 +2,7 @@
 
 import { Category, Expense } from './BudgetDashboard'
 import Link from 'next/link'
+import { formatDisplayDate } from '@/utils/dates'
 
 interface Props {
   expenses: Expense[]
@@ -57,7 +58,7 @@ export default function ExpenseList({
                         ${expense.amount.toFixed(2)}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {new Date(expense.date).toLocaleDateString()}
+                        {formatDisplayDate(expense.date)}
                       </p>
                     </div>
                   </div>
@@ -66,7 +67,7 @@ export default function ExpenseList({
             })}
             
             {expenses.length > RECENT_EXPENSES_LIMIT && (
-              <div key="view-all" className="text-center py-4 px-2 w-full sticky bottom-0 bg-white/80 backdrop-blur-sm">
+              <div className="text-center py-4 px-2 w-full sticky bottom-0 bg-white/80 backdrop-blur-sm">
                 <Link
                   href="/transactions"
                   className="inline-block w-full px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm"

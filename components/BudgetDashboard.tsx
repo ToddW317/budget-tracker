@@ -8,6 +8,7 @@ import AddExpenseForm from './AddExpenseForm'
 import AddCategoryForm from './AddCategoryForm'
 import { addCategory, addExpense, getUserCategories, getUserExpenses, updateCategory, deleteCategory, deleteExpense } from '@/services/firebase'
 import UserProfileSettings from './UserProfileSettings'
+import Link from 'next/link'
 
 export type Category = {
   id: string
@@ -22,7 +23,34 @@ export type Expense = {
   amount: number
   description: string
   date: string
+  month: string // Format: "YYYY-MM"
 }
+
+export type MonthlyBudget = {
+  id: string
+  month: string // Format: "YYYY-MM"
+  categoryId: string
+  budget: number
+  spent: number
+}
+
+export type Bill = {
+  id: string;
+  title: string;
+  amount: number;
+  dueDate: string;
+  isPaid: boolean;
+  lastPaid: string | null;
+};
+
+export type Income = {
+  id: string;
+  source: string;
+  amount: number;
+  receiveDate: string;
+  isRecurring: boolean;
+  frequency?: 'weekly' | 'biweekly' | 'monthly';
+};
 
 export default function BudgetDashboard() {
   const { user, signInWithGoogle } = useAuth()
@@ -30,11 +58,13 @@ export default function BudgetDashboard() {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isIndexBuilding, setIsIndexBuilding] = useState(false)
 
   const loadUserData = useCallback(async () => {
     if (!user) return
     setLoading(true)
     setError(null)
+    setIsIndexBuilding(false)
     try {
       const [userCategories, userExpenses] = await Promise.all([
         getUserCategories(user.uid),
@@ -42,8 +72,13 @@ export default function BudgetDashboard() {
       ])
       setCategories(userCategories)
       setExpenses(userExpenses)
-    } catch (error) {
-      setError('Failed to load data. Please try again later.')
+    } catch (error: any) {
+      if (error.message?.includes('requires an index')) {
+        setIsIndexBuilding(true)
+        setError('Database indexes are being built. This may take a few minutes.')
+      } else {
+        setError('Failed to load data. Please try again later.')
+      }
       console.error('Error loading user data:', error)
     }
     setLoading(false)
@@ -83,7 +118,8 @@ export default function BudgetDashboard() {
         categoryId: expense.categoryId,
         amount: expense.amount,
         description: expense.description,
-        date: expense.date
+        date: expense.date,
+        month: expense.month
       };
       
       setExpenses(prev => [...prev, completeExpense]);
@@ -193,6 +229,11 @@ export default function BudgetDashboard() {
             </div>
             <div className="ml-3">
               <p className="text-sm text-red-600">{error}</p>
+              {isIndexBuilding && (
+                <p className="text-sm text-red-500 mt-1">
+                  Please wait while we set up the database. This is a one-time process.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -206,6 +247,15 @@ export default function BudgetDashboard() {
             </h2>
             <p className="text-gray-500 mt-1">Manage your budget and expenses</p>
           </div>
+          <Link
+            href="/history"
+            className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+          >
+            <span>View History</span>
+            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
         </div>
       </div>
 
