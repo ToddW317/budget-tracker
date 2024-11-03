@@ -241,52 +241,56 @@ export default function IncomeTracker({ incomes: initialIncomes, onUpdate }: Pro
           <table className="hidden md:table min-w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
                   Source
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                   Amount
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                   Frequency
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
                   Next Payment
                 </th>
-                <th scope="col" className="relative px-6 py-3">
-                  <span className="sr-only">Actions</span>
+                <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
+                  Actions
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {incomes.map(income => (
                 <tr key={income.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4">
                     <div className="flex flex-col">
-                      <div className="text-sm font-medium text-gray-900">{income.source}</div>
+                      <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
+                        {income.source}
+                      </div>
                       {income.description && (
-                        <div className="text-sm text-gray-500">{income.description}</div>
+                        <div className="text-sm text-gray-500 truncate max-w-[200px]">
+                          {income.description}
+                        </div>
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4">
                     <div className="text-sm font-medium text-gray-900">
                       ${income.amount.toFixed(2)}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                  <td className="px-4 py-4">
+                    <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                       {income.frequency}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-4 py-4 text-sm text-gray-500">
                     {format(new Date(income.receiveDate), 'MMM d, yyyy')}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-4 py-4 text-right">
                     <button
                       onClick={() => handleDelete(income.id)}
                       disabled={deleteLoading === income.id}
-                      className="text-red-600 hover:text-red-900"
+                      className="text-sm text-red-600 hover:text-red-900"
                     >
                       {deleteLoading === income.id ? 'Deleting...' : 'Delete'}
                     </button>
