@@ -2,24 +2,15 @@ import { format, parse, parseISO, startOfDay, addDays } from 'date-fns';
 
 // Convert local date to UTC (stored in DB)
 export const localToUTC = (dateString: string): string => {
-  // Parse the local date string to a Date object
   const [year, month, day] = dateString.split('-').map(Number);
-  
-  // Create date with UTC noon (12:00) and add a day
-  const utcDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
-  const adjustedDate = addDays(utcDate, 1);
-  
-  // Return ISO string
-  return adjustedDate.toISOString();
+  const utcDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+  return utcDate.toISOString();
 };
 
 // Convert UTC to local display date
 export const utcToLocal = (utcString: string): string => {
-  const date = new Date(utcString);
-  const year = date.getUTCFullYear();
-  const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
-  const day = date.getUTCDate().toString().padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  const date = parseISO(utcString);
+  return format(date, 'yyyy-MM-dd');
 };
 
 // Get month string from UTC date
@@ -38,18 +29,21 @@ export const formatDisplayDate = (utcString: string): string => {
 };
 
 // Format date for database
-export const formatDateForDB = (date: Date): string => {
+export const formatDateForDB = (date: Date | string): string => {
+  // If date is a string, convert it to Date object
+  const dateObj = typeof date === 'string' ? parseISO(date) : date;
+  
+  // Create a new date at midnight UTC for the given date
   const utcDate = new Date(Date.UTC(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-    12, // Set to noon UTC
+    dateObj.getFullYear(),
+    dateObj.getMonth(),
+    dateObj.getDate(),
+    0, // Set to midnight UTC
     0,
     0,
     0
   ));
-  const adjustedDate = addDays(utcDate, 1); // Add a day to adjust the display
-  return adjustedDate.toISOString();
+  return utcDate.toISOString();
 };
 
 export function isSameDate(date1: Date | string, date2: Date | string): boolean {

@@ -1,4 +1,15 @@
-import { addDays, addWeeks, addMonths, addYears, parseISO, isBefore } from 'date-fns';
+import { 
+    addDays, 
+    addWeeks, 
+    addMonths, 
+    addYears, 
+    parseISO, 
+    isBefore,
+    getDate,
+    setDate,
+    endOfMonth,
+    format 
+  } from 'date-fns';
 import { Bill, Income, FrequencyType } from '@/types/bills';
 import { formatDateForDB } from './dates';
 
@@ -8,48 +19,129 @@ export const calculateNextDate = (
   frequency: FrequencyType,
   customDays?: number
 ): string => {
-  const date = parseISO(currentDate);
+  // Add one day to the initial date to account for timezone conversion
+  const date = addDays(parseISO(currentDate), 1);
+  const dayOfMonth = getDate(date);
+  
+  let nextDate: Date;
   
   switch (frequency) {
     case 'weekly':
-      return formatDateForDB(addWeeks(date, 1));
+      nextDate = addWeeks(date, 1);
+      break;
+      
     case 'biweekly':
-      return formatDateForDB(addWeeks(date, 2));
-    case 'monthly':
-      return formatDateForDB(addMonths(date, 1));
-    case 'quarterly':
-      return formatDateForDB(addMonths(date, 3));
+      nextDate = addWeeks(date, 2);
+      break;
+      
+    case 'monthly': {
+      // First add a month
+      nextDate = addMonths(date, 1);
+      
+      // Explicitly set the same day of month
+      const lastDayOfMonth = endOfMonth(nextDate).getDate();
+      const targetDay = Math.min(dayOfMonth, lastDayOfMonth);
+      nextDate = setDate(nextDate, targetDay);
+      break;
+    }
+      
+    case 'quarterly': {
+      // First add three months
+      nextDate = addMonths(date, 3);
+      
+      // Explicitly set the same day of month
+      const lastDayOfMonth = endOfMonth(nextDate).getDate();
+      const targetDay = Math.min(dayOfMonth, lastDayOfMonth);
+      nextDate = setDate(nextDate, targetDay);
+      break;
+    }
+      
     case 'yearly':
-      return formatDateForDB(addYears(date, 1));
+      nextDate = addYears(date, 1);
+      break;
+      
     case 'custom':
-      return formatDateForDB(addDays(date, customDays || 0));
+      nextDate = addDays(date, customDays || 0);
+      break;
+      
     default:
       return currentDate;
   }
+
+  return formatDateForDB(nextDate);
 };
 
 // Generate future occurrences for a bill
 export const generateFutureBillOccurrences = (
   bill: Bill,
-  monthsAhead: number = 3
+  monthsAhead: number = 12
 ): Bill[] => {
   if (!bill.isRecurring || !bill.frequency) return [bill];
 
-  const occurrences: Bill[] = [];
-  let currentDate = bill.lastPaid || bill.dueDate;
+  const occurrences: Bill[] = [bill]; // Include the original bill
+  const startDate = parseISO(bill.dueDate);
+  const originalDayOfMonth = getDate(startDate);
   const endDate = addMonths(new Date(), monthsAhead);
+  let currentDate = startDate;
   
-  while (isBefore(parseISO(currentDate), endDate)) {
-    const nextDate = calculateNextDate(currentDate, bill.frequency, bill.customFrequencyDays);
+  while (isBefore(currentDate, endDate)) {
+    let nextDate: Date;
     
-    occurrences.push({
-      ...bill,
-      id: `${bill.id}_${nextDate}`, // Temporary ID for UI purposes
-      dueDate: nextDate,
-      isPaid: false,
-      lastPaid: null,
-      nextDueDate: calculateNextDate(nextDate, bill.frequency, bill.customFrequencyDays)
-    });
+    switch (bill.frequency) {
+      case 'monthly': {
+        // Add one month and preserve the day
+        nextDate = addMonths(currentDate, 1);
+        const nextDayOfMonth = getDate(nextDate);
+        
+        // If the day changed (due to month length differences), adjust it
+        if (nextDayOfMonth !== originalDayOfMonth) {
+          const lastDayOfMonth = endOfMonth(nextDate).getDate();
+          const targetDay = Math.min(originalDayOfMonth, lastDayOfMonth);
+          nextDate = setDate(nextDate, targetDay);
+        }
+        break;
+      }
+      case 'biweekly':
+        nextDate = addWeeks(currentDate, 2);
+        break;
+      case 'weekly':
+        nextDate = addWeeks(currentDate, 1);
+        break;
+      case 'quarterly': {
+        nextDate = addMonths(currentDate, 3);
+        const nextDayOfMonth = getDate(nextDate);
+        
+        if (nextDayOfMonth !== originalDayOfMonth) {
+          const lastDayOfMonth = endOfMonth(nextDate).getDate();
+          const targetDay = Math.min(originalDayOfMonth, lastDayOfMonth);
+          nextDate = setDate(nextDate, targetDay);
+        }
+        break;
+      }
+      case 'yearly':
+        nextDate = addYears(currentDate, 1);
+        break;
+      case 'custom':
+        nextDate = addDays(currentDate, bill.customFrequencyDays || 0);
+        break;
+      default:
+        nextDate = currentDate;
+    }
+
+    if (isBefore(startDate, nextDate)) {
+      const nextDateString = formatDateForDB(nextDate); // nextDate is already a Date object
+      const nextNextDate = calculateNextDate(nextDateString, bill.frequency, bill.customFrequencyDays);
+      
+      occurrences.push({
+        ...bill,
+        virtualId: `${bill.id}_${nextDateString}`,
+        id: bill.id,
+        dueDate: nextDateString,
+        isPaid: false,
+        lastPaid: null,
+        nextDueDate: nextNextDate
+      });
+    }
     
     currentDate = nextDate;
   }

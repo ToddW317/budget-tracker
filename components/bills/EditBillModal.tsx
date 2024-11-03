@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Bill, FrequencyType } from '@/types/bills'
 import { updateBill, deleteBill } from '@/services/firebase'
 import { useAuth } from '@/contexts/AuthContext'
@@ -14,15 +14,27 @@ interface Props {
 
 export default function EditBillModal({ bill, onClose, onUpdate }: Props) {
   const { user } = useAuth()
-  const [title, setTitle] = useState(bill.title)
-  const [amount, setAmount] = useState(bill.amount.toString())
-  const [dueDate, setDueDate] = useState(format(parseISO(bill.dueDate), 'yyyy-MM-dd'))
-  const [isRecurring, setIsRecurring] = useState(bill.isRecurring)
-  const [frequency, setFrequency] = useState<FrequencyType>(bill.frequency || 'monthly')
-  const [customFrequencyDays, setCustomFrequencyDays] = useState(bill.customFrequencyDays?.toString() || '')
-  const [notes, setNotes] = useState(bill.notes || '')
+  const [title, setTitle] = useState('')
+  const [amount, setAmount] = useState('')
+  const [dueDate, setDueDate] = useState('')
+  const [isRecurring, setIsRecurring] = useState(false)
+  const [frequency, setFrequency] = useState<FrequencyType>('monthly')
+  const [customFrequencyDays, setCustomFrequencyDays] = useState('')
+  const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (bill) {
+      setTitle(bill.title || '')
+      setAmount(bill.amount?.toString() || '')
+      setDueDate(format(parseISO(bill.dueDate), 'yyyy-MM-dd'))
+      setIsRecurring(bill.isRecurring || false)
+      setFrequency(bill.frequency || 'monthly')
+      setCustomFrequencyDays(bill.customFrequencyDays?.toString() || '')
+      setNotes(bill.notes || '')
+    }
+  }, [bill])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,9 +44,9 @@ export default function EditBillModal({ bill, onClose, onUpdate }: Props) {
     setError(null)
 
     try {
-      const baseBillId = bill.id.split('_')[0];
-
-      await updateBill(user.uid, baseBillId, {
+      const baseId = bill.id.split('_')[0]
+      
+      const updates: Partial<Bill> = {
         title,
         amount: parseFloat(amount),
         dueDate,
@@ -46,8 +58,9 @@ export default function EditBillModal({ bill, onClose, onUpdate }: Props) {
           })
         }),
         notes
-      });
+      };
 
+      await updateBill(user.uid, baseId, updates)
       await onUpdate()
       onClose()
     } catch (err) {
@@ -65,7 +78,8 @@ export default function EditBillModal({ bill, onClose, onUpdate }: Props) {
     setError(null)
 
     try {
-      await deleteBill(user.uid, bill.id)
+      const baseId = bill.id.split('_')[0]
+      await deleteBill(user.uid, baseId)
       await onUpdate()
       onClose()
     } catch (err) {

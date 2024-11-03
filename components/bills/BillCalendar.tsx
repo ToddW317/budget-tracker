@@ -84,36 +84,36 @@ export default function BillCalendar({ bills, onUpdate }: Props) {
     : []
 
   return (
-    <div className="space-y-4">
-      {/* Calendar Header */}
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-4 max-w-full overflow-x-hidden">
+      {/* Calendar Header - made more compact */}
+      <div className="flex justify-between items-center mb-4">
         <button
           onClick={handlePreviousMonth}
-          className="p-2 hover:bg-gray-100 rounded-lg"
+          className="p-1 sm:p-2 hover:bg-gray-100 rounded-lg"
         >
           ←
         </button>
-        <h2 className="text-xl font-semibold">
+        <h2 className="text-lg sm:text-xl font-semibold">
           {format(currentMonth, 'MMMM yyyy')}
         </h2>
         <button
           onClick={handleNextMonth}
-          className="p-2 hover:bg-gray-100 rounded-lg"
+          className="p-1 sm:p-2 hover:bg-gray-100 rounded-lg"
         >
           →
         </button>
       </div>
 
-      {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-2">
-        {/* Weekday Headers */}
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-          <div key={day} className="text-center font-medium text-gray-500 text-sm py-2">
+      {/* Calendar Grid - adjusted for mobile */}
+      <div className="grid grid-cols-7 gap-1 sm:gap-2">
+        {/* Weekday Headers - more compact on mobile */}
+        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
+          <div key={day} className="text-center font-medium text-gray-500 text-xs sm:text-sm py-1">
             {day}
           </div>
         ))}
 
-        {/* Calendar Days */}
+        {/* Calendar Days - simplified for mobile */}
         {calendarDays.map(day => {
           const dateKey = format(day, 'yyyy-MM-dd')
           const dayBills = billsByDate[dateKey] || []
@@ -125,33 +125,32 @@ export default function BillCalendar({ bills, onUpdate }: Props) {
             <div
               key={dateKey}
               onClick={() => handleDateClick(day)}
-              className={`min-h-[100px] p-2 border rounded-lg cursor-pointer transition-all duration-200 ${
+              className={`min-h-[60px] sm:min-h-[100px] p-1 sm:p-2 border rounded-lg cursor-pointer transition-all duration-200 ${
                 isSelected ? 'ring-2 ring-blue-500 shadow-lg' :
                 hasUnpaidBills ? 'bg-red-50 hover:bg-red-100' : 
                 hasAttentionBills ? 'bg-yellow-50 hover:bg-yellow-100' : 
                 'bg-white hover:bg-gray-50'
               }`}
             >
-              <div className="text-right text-sm text-gray-500 mb-2">
+              <div className="text-right text-xs sm:text-sm text-gray-500">
                 {format(day, 'd')}
               </div>
-              <div className="space-y-1">
-                {dayBills.slice(0, 2).map(bill => (
+              <div className="space-y-0.5 sm:space-y-1">
+                {dayBills.slice(0, 1).map(bill => (
                   <div
                     key={`${bill.id}_${bill.dueDate}`}
-                    className={`text-sm p-1 rounded cursor-pointer ${
-                      bill.isPaid ? 'bg-green-100 text-green-800 hover:bg-green-200' : 
-                      needsAttention(bill) ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' : 
-                      'bg-red-100 text-red-800 hover:bg-red-200'
+                    className={`text-xs sm:text-sm p-0.5 sm:p-1 rounded cursor-pointer ${
+                      bill.isPaid ? 'bg-green-100 text-green-800' : 
+                      needsAttention(bill) ? 'bg-yellow-100 text-yellow-800' : 
+                      'bg-red-100 text-red-800'
                     }`}
                   >
                     <div className="font-medium truncate">{bill.title}</div>
-                    <div className="text-xs">${bill.amount.toFixed(2)}</div>
                   </div>
                 ))}
-                {dayBills.length > 2 && (
-                  <div className="text-xs text-gray-500 text-center">
-                    +{dayBills.length - 2} more
+                {dayBills.length > 1 && (
+                  <div className="text-[10px] sm:text-xs text-gray-500 text-center">
+                    +{dayBills.length - 1}
                   </div>
                 )}
               </div>
@@ -160,21 +159,21 @@ export default function BillCalendar({ bills, onUpdate }: Props) {
         })}
       </div>
 
-      {/* Selected Date Bills */}
+      {/* Selected Date Bills - made more compact for mobile */}
       {selectedDate && (
-        <div className="mt-8 bg-gray-50 rounded-lg p-4">
-          <h3 className="text-lg font-semibold mb-4">
-            Bills for {format(selectedDate, 'MMMM d, yyyy')}
+        <div className="mt-4 sm:mt-8 bg-gray-50 rounded-lg p-3 sm:p-4">
+          <h3 className="text-base sm:text-lg font-semibold mb-3">
+            Bills for {format(selectedDate, 'MMM d, yyyy')}
           </h3>
           {selectedDateBills.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">No bills due on this date</p>
+            <p className="text-gray-500 text-center py-2 sm:py-4">No bills due on this date</p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {selectedDateBills.map(bill => (
                 <div
                   key={bill.id}
                   onClick={() => handleBillClick(bill)}
-                  className={`p-4 rounded-lg cursor-pointer transition-all duration-200 ${
+                  className={`p-2 sm:p-4 rounded-lg cursor-pointer transition-all duration-200 ${
                     bill.isPaid ? 'bg-green-50 hover:bg-green-100' :
                     needsAttention(bill) ? 'bg-yellow-50 hover:bg-yellow-100' :
                     'bg-red-50 hover:bg-red-100'
@@ -182,8 +181,8 @@ export default function BillCalendar({ bills, onUpdate }: Props) {
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <h4 className="font-medium">{bill.title}</h4>
-                      <p className="text-sm text-gray-600">
+                      <h4 className="font-medium text-sm sm:text-base">{bill.title}</h4>
+                      <p className="text-xs sm:text-sm text-gray-600">
                         ${bill.amount.toFixed(2)}
                         {bill.isRecurring && (
                           <span className="ml-2 italic">
@@ -193,7 +192,7 @@ export default function BillCalendar({ bills, onUpdate }: Props) {
                         )}
                       </p>
                     </div>
-                    <div className={`px-2 py-1 rounded text-sm ${
+                    <div className={`px-2 py-0.5 rounded text-xs sm:text-sm ${
                       bill.isPaid ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'
                     }`}>
                       {bill.isPaid ? 'Paid' : 'Unpaid'}
@@ -206,18 +205,18 @@ export default function BillCalendar({ bills, onUpdate }: Props) {
         </div>
       )}
 
-      {/* Legend */}
-      <div className="flex justify-end space-x-4 text-sm mt-4">
+      {/* Legend - simplified for mobile */}
+      <div className="flex justify-end flex-wrap gap-2 text-xs sm:text-sm mt-2 sm:mt-4">
         <div className="flex items-center">
-          <div className="w-3 h-3 bg-green-100 rounded-full mr-2"></div>
+          <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-100 rounded-full mr-1 sm:mr-2"></div>
           <span>Paid</span>
         </div>
         <div className="flex items-center">
-          <div className="w-3 h-3 bg-yellow-100 rounded-full mr-2"></div>
+          <div className="w-2 h-2 sm:w-3 sm:h-3 bg-yellow-100 rounded-full mr-1 sm:mr-2"></div>
           <span>Due Soon</span>
         </div>
         <div className="flex items-center">
-          <div className="w-3 h-3 bg-red-100 rounded-full mr-2"></div>
+          <div className="w-2 h-2 sm:w-3 sm:h-3 bg-red-100 rounded-full mr-1 sm:mr-2"></div>
           <span>Unpaid</span>
         </div>
       </div>
