@@ -524,10 +524,19 @@ export const getMonthlyBudgets = async (userId: string, month: string): Promise<
       where('month', '==', month)
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
+    const budgets = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     })) as MonthlyBudget[];
+
+    // Get categories to add names if they're missing
+    const categories = await getUserCategories(userId);
+    const categoryMap = new Map(categories.map(cat => [cat.id, cat]));
+
+    return budgets.map(budget => ({
+      ...budget,
+      categoryName: budget.categoryName || categoryMap.get(budget.categoryId)?.name
+    }));
   } catch (error) {
     console.error('Error getting monthly budgets:', error);
     throw error;
@@ -614,7 +623,14 @@ export const getOrCreateMonthlyBudgets = async (userId: string, month: string): 
     
     // If we have budgets for this month, return them
     if (existingBudgets.length > 0) {
-      return existingBudgets;
+      // Get categories to add names
+      const categories = await getUserCategories(userId);
+      const categoryMap = new Map(categories.map(cat => [cat.id, cat]));
+      
+      return existingBudgets.map(budget => ({
+        ...budget,
+        categoryName: categoryMap.get(budget.categoryId)?.name
+      }));
     }
 
     // If no budgets exist for this month, create them from current categories
@@ -628,11 +644,12 @@ export const getOrCreateMonthlyBudgets = async (userId: string, month: string): 
       const monthlyBudgetRef = doc(collection(db, 'monthlyBudgets'));
       const newBudget: MonthlyBudget = {
         id: monthlyBudgetRef.id,
-        userId,
         month,
         categoryId: category.id,
         budget: category.budget,
         spent: 0,
+        userId,
+        categoryName: category.name
       };
       
       batch.set(monthlyBudgetRef, {
@@ -641,6 +658,7 @@ export const getOrCreateMonthlyBudgets = async (userId: string, month: string): 
         categoryId: category.id,
         budget: category.budget,
         spent: 0,
+        categoryName: category.name,
         createdAt: serverTimestamp()
       });
       

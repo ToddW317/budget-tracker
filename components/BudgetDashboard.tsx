@@ -27,12 +27,14 @@ export type Expense = {
 }
 
 export type MonthlyBudget = {
-  id: string
-  month: string // Format: "YYYY-MM"
-  categoryId: string
-  budget: number
-  spent: number
-}
+  id: string;
+  month: string; // Format: "YYYY-MM"
+  categoryId: string;
+  budget: number;
+  spent: number;
+  userId: string;
+  categoryName?: string;
+};
 
 export type Bill = {
   id: string;

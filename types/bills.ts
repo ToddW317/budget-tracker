@@ -1,25 +1,36 @@
-export type FrequencyType = 'daily' | 'bi-weekly' | 'monthly' | 'quarterly' | 'semi-annually' | 'annually' | 'custom'
+export type FrequencyType = 
+  | 'weekly'
+  | 'biweekly'
+  | 'monthly'
+  | 'quarterly'
+  | 'yearly'
+  | 'custom';
 
 export interface Bill {
-  id: string
-  title: string
-  amount: number
-  dueDate: string
-  frequency: FrequencyType
-  category: string
-  description?: string
-  customRepeatDays?: number
-  lastPaid?: string
-  isPaid?: boolean
+  id: string;
+  title: string;
+  amount: number;
+  dueDate: string;
+  isPaid: boolean;
+  lastPaid: string | null;
+  isRecurring: boolean;
+  frequency?: FrequencyType;
+  customFrequencyDays?: number; // For custom frequency in days
+  category?: string; // Optional category for the bill
+  nextDueDate?: string; // Calculated next due date
+  notes?: string;
 }
 
 export interface Income {
-  id: string
-  source: string
-  amount: number
-  frequency: FrequencyType
-  receiveDate: string
-  description?: string
+  id: string;
+  source: string;
+  amount: number;
+  receiveDate: string;
+  isRecurring: boolean;
+  frequency?: FrequencyType;
+  customFrequencyDays?: number;
+  nextReceiveDate?: string;
+  notes?: string;
 }
 
 export interface Category {

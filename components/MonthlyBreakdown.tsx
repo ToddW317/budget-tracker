@@ -79,11 +79,8 @@ export default function MonthlyBreakdown({ budgets, expenses, month, categories 
               index === self.findIndex(b => b.categoryId === budget.categoryId)
             )
             .map(budget => {
-              const category = categories.find(c => c.id === budget.categoryId);
               const categoryData = expensesByCategory[budget.categoryId] || { total: 0, expenses: [] };
               const spendingPercentage = (categoryData.total / budget.budget) * 100;
-
-              if (!category) return null;
 
               return (
                 <div key={budget.id} className="border-b last:border-b-0 pb-4">
@@ -95,10 +92,10 @@ export default function MonthlyBreakdown({ budgets, expenses, month, categories 
                         'bg-green-500'
                       }`} />
                       <Link 
-                        href={`/categories/${category.id}`}
+                        href={`/categories/${budget.categoryId}`}
                         className="text-lg font-medium hover:text-blue-600"
                       >
-                        {category.name}
+                        {budget.categoryName || 'Unknown Category'}
                       </Link>
                     </div>
                     <div className="text-right">
